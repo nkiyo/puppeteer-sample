@@ -1,5 +1,18 @@
 const puppeteer = require('puppeteer');
 
+const getCircularReplacer = () => {
+  const seen = new WeakSet();
+  return (key, value) => {
+    if (typeof value === "object" && value !== null) {
+      if (seen.has(value)) {
+        return;
+      }
+      seen.add(value);
+    }
+    return value;
+  };
+}
+
 (async () => {
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
@@ -18,12 +31,19 @@ const puppeteer = require('puppeteer');
   await searchButtons[0].click();
   await page.waitForNavigation();
 
-  // TODO 検索結果一覧を取得して出力
-  const searchResults = await page.$x('//*[@id="rso"]/div[1]/div/div/div/div/div[1]/a/h3')
+  // 検索結果一覧を取得して出力
+  // => https://qiita.com/horikeso/items/f4af232c31ac1d81a425
+  //const searchResults = await page.$x('//*[@id="rso"]/div[1]/div/div/div/div/div[1]/a/h3')
+  //const searchResults = await page.$x('//div/div/div/div/a/h3');
+  const searchResults = await page.$x('//h3');
   console.log(`${searchResults.length}`);
-  for(const result of searchResults) {
-    console.log(`${result.innerText}`);
+  for(let index = 0; index < searchResults.length; index++) {
+    const value = await (await searchResults[index].getProperty('innerHTML')).jsonValue();
+    console.log(`${value}`);
   }
+  // => https://github.com/puppeteer/puppeteer/issues/331#issuecomment-323010213
+  //const bodyHTML = await page.evaluate(() => document.body.innerHTML);
+  //console.log(`${bodyHTML}`);
 
   await page.screenshot({path: 'example.png'});
   await page.pdf({path: 'example.pdf', format: 'A4'});
