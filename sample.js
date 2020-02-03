@@ -1,18 +1,5 @@
 const puppeteer = require('puppeteer');
 
-const getCircularReplacer = () => {
-  const seen = new WeakSet();
-  return (key, value) => {
-    if (typeof value === "object" && value !== null) {
-      if (seen.has(value)) {
-        return;
-      }
-      seen.add(value);
-    }
-    return value;
-  };
-}
-
 (async () => {
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
@@ -32,15 +19,15 @@ const getCircularReplacer = () => {
   await page.waitForNavigation();
 
   // 検索結果一覧を取得して出力
+  // xpathで選択した部品のinnerTextを出力
   // => https://qiita.com/horikeso/items/f4af232c31ac1d81a425
-  //const searchResults = await page.$x('//*[@id="rso"]/div[1]/div/div/div/div/div[1]/a/h3')
-  //const searchResults = await page.$x('//div/div/div/div/a/h3');
-  const searchResults = await page.$x('//h3');
-  console.log(`${searchResults.length}`);
+  const searchResults = await page.$x('//div/div/div/div/a/h3');
   for(let index = 0; index < searchResults.length; index++) {
-    const value = await (await searchResults[index].getProperty('innerHTML')).jsonValue();
+    const value = await (await searchResults[index].getProperty('innerText')).jsonValue();
     console.log(`${value}`);
   }
+
+  // デバッグ用 ページ全体を出力
   // => https://github.com/puppeteer/puppeteer/issues/331#issuecomment-323010213
   //const bodyHTML = await page.evaluate(() => document.body.innerHTML);
   //console.log(`${bodyHTML}`);
