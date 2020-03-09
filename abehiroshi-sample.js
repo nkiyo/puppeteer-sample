@@ -5,8 +5,8 @@ const util = require('util');
 
 (async () => {
   const browser = await puppeteer.launch({
-    headless: false,
-    devtools: true
+    //headless: false,
+    //devtools: true
   });
 
   const page = await browser.newPage();
@@ -16,16 +16,14 @@ const util = require('util');
   const [profieLink] = await topFrame.$x('/html/body/table/tbody/tr[1]/td[1]/table/tbody/tr[4]/td[2]/a');
   await profieLink.click();
 
-  // TODO プロフィールをスクレイピングする
+  // プロフィールをスクレイピングする
   topFrame = await page.frames()[2];
-  const [col1, col2] = await topFrame.$x('/html/body/table/tbody/tr[2]/td');
-  util.inspect(col1);
-  util.inspect(col2);
-
-  // デバッグ用 ページ全体を出力
-  // => https://github.com/puppeteer/puppeteer/issues/331#issuecomment-323010213
-  //const bodyHTML = await page.evaluate(() => document.body.innerHTML);
-  //console.log(`${bodyHTML}`);
+  const txts = await topFrame.evaluate(() => {
+    const elems = document.querySelectorAll('table tbody tr td');
+    const tds = Array.from(elems);
+    return tds.map(td => td.textContent.replace(/[\n\r]+/g, ''));
+  });
+  console.log(`${txts.join(',')}`);
 
   await page.screenshot({path: 'example.png'});
   await page.pdf({path: 'example.pdf', format: 'A4'});
